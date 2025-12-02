@@ -1,4 +1,4 @@
-# Contexto do Trabalho de Aprendizado por Reforço em Marketing
+#Trabalho de Aprendizado por Reforço em Marketing
 
 ## Descrição geral
 Este projeto utiliza o dataset `digital_marketing_campaign_dataset.csv` (8 mil registros e 20 atributos) para simular decisões de marketing digital. Cada linha representa um cliente, o canal utilizado (Email, PPC, Referral, SEO ou Social Media), custos da campanha e indicadores de engajamento/conversão. O briefing do documento **"Aprendizado por Reforço.docx"** solicitou a criação de um ambiente de simulação e de um agente que maximize métricas de negócio.
