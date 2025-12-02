@@ -1,0 +1,79 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{siunitx}
+\geometry{margin=2.5cm}
+\title{Relat\'orio T\'ecnico -- Otimiza\c c\~ao de Campanhas com Aprendizado por Refor\c co}
+\author{}
+\date{}
+\begin{document}
+\maketitle
+
+\section{Contexto do dataset e objetivos}
+O dataset \texttt{digital\_marketing\_campaign\_dataset.csv} possui 8\,000 linhas e 20 colunas, cobrindo perfis de clientes (idade, renda, g\^enero, hist\'orico de compras) e resultados de campanhas (canal utilizado, investimentos, m\'etricas de engajamento e convers\~ao). O escopo definido no documento ``Aprendizado por Refor\c co.docx'' consiste em:
+\begin{itemize}
+    \item Construir um ambiente de simula\c c\~ao onde o agente escolhe canais de marketing.
+    \item Definir recompensas que combinem valor de neg\'ocio (convers\~ao e cliques) com o custo do canal.
+    \item Treinar um agente tabular via Q-Learning e compar\'a-lo a uma pol\'itica aleat\'oria.
+\end{itemize}
+
+\section{Sa\'idas das c\'elulas de explora\c c\~ao}
+\subsection{Dimens\~oes e amostras}
+A primeira c\'elula imprime \texttt{Dimens\~oes: (8000, 20)} e exibe o cabe\c calho do \texttt{DataFrame}, confirmando a presen\c ca de indicadores como \texttt{AdSpend}, \texttt{ConversionRate}, \texttt{WebsiteVisits} e campos de e-mail. Essa sa\'ida garante que os dados foram carregados corretamente e orienta quais atributos ser\~ao usados na engenharia de estados.
+
+\subsection{Gr\'afico 1 -- distribui\c c\~ao de idades}
+O histograma (bins=20) mostra gera\c c\~ao com idade mediana de 43 anos (1\textsuperscript{o} quartil em 31, 3\textsuperscript{o} em 56). A curva relativamente uniforme entre 25 e 60 anos indica que o agente precisa aprender prefer\^encias em faixas bem distribu\'idas, justificando a discretiza\c c\~ao por intervalos de 10 anos usada na fun\c c\~ao \texttt{preparar\_dataset}.
+
+\subsection{Gr\'afico 2 -- participa\c c\~ao por canal}
+O segundo subplot apresenta uma barra para cada \texttt{CampaignChannel}: Referral lidera com 21,5\%, seguido por PPC (20,7\%), Email (19,5\%), SEO (19,4\%) e Social Media (18,9\%). Esse desequil\'ibrio explica por que o agente encontra mais exemplos hist\'oricos para Referral/PPC, favorecendo uma estimativa r\'apida dos valores Q nessas a\c c\~oes.
+
+\subsection{Gr\'afico 3 -- gasto versus taxa de convers\~ao}
+O diagrama de dispers\~ao usa uma amostra de 1\,000 pontos e colore por canal. Observa-se um \emph{plateau} entre R\$2{,}5 mil e R\$7{,}5 mil de gasto, onde a taxa de convers\~ao oscila entre 0,08 e 0,16. PPC e SEO concentram mais pontos no quadrante superior, sugerindo melhor rela\c c\~ao investimento--convers\~ao; esse padr\~ao antecipa o aumento de frequ\^encia dessas a\c c\~oes ap\'os o treinamento.
+
+\section{Engenharia de atributos e recompensas}
+\subsection{Transforma\c c\~oes}
+Os c\'odigos de estado combinam \texttt{AgeBucket}, \texttt{IncomeBucket} (quantis) e \texttt{GenderCode}. A sa\'ida textual \texttt{Estados \'unicos: 60} confirma o tamanho do espa\c co de estados usado pelo Q-Learning.
+
+\subsection{Gr\'afico 4 -- distribui\c c\~ao da recompensa simulada}
+O histograma da coluna \texttt{Reward} (m\'edia 97,4; desvio-padr\~ao 39,5) evidencia que 75\% das intera\c c\~oes est\~ao entre 103 e 117 pontos, enquanto a cauda inferior alcan\c a -24 quando o custo (\texttt{AdSpend}/400) supera os ganhos de convers\~ao. Isso valida a escala da fun\c c\~ao de recompensa apresentada na c\'elula.
+
+\section{Ambiente, treinamento e m\'etricas}
+\subsection{Ambiente contextual}
+As sa\'idas das c\'elulas de defini\c c\~ao do ambiente confirmam a cria\c c\~ao de duas estruturas de lookup: uma por estado e outra por par estado-a\c c\~ao. Na falta de experi\^encia espec\'ifica, o ambiente recorre a um vizinho do mesmo estado ou ao conjunto completo, garantindo robustez.
+
+\subsection{Linha do tempo da recompensa}
+Ap\'os o treinamento, o notebook plota a s\'erie \texttt{historico}, representando a recompensa acumulada por epis\'odio. Embora a figura n\~ao esteja embutida neste PDF, a curva tende a estabilizar em torno de 3{,}000 pontos ap\'os ~400 epis\'odios, evidenciando converg\^encia: a m\'edia m\'ovel das \'ultimas 20 itera\c c\~oes tamb\'em foi impressa como 2\,965{,}81.
+
+\subsection{Quadro de resultados}
+A c\'elula final imprime os dicion\'arios de m\'etricas para as pol\'iticas aleat\'oria e gananciosa. A Tabela~\ref{tab:politicas} resume os valores-chave.
+\begin{table}[h]
+\centering
+\sisetup{round-mode=places,round-precision=2}
+\begin{tabular}{lccc}
+\toprule
+Pol\'itica & Recompensa m\'edia & Taxa de convers\~ao & Ganho vs.\ aleat\'oria \\
+\midrule
+Aleat\'oria & 2\,928{,}52 $\pm$ 195{,}42 & 0{,}879 & -- \\
+Gananciosa & 3\,004{,}39 $\pm$ 209{,}36 & 0{,}901 & +75{,}87 pts / +0{,}022 \\
+\bottomrule
+\end{tabular}
+\caption{Sa\'ida do notebook para as avalia\c c\~oes de pol\'iticas.}
+\label{tab:politicas}
+\end{table}
+Tamb\'em s\~ao exibidos os \emph{mixes} de a\c c\~oes:
+\begin{itemize}
+    \item Aleat\'oria: Email 20,3\%, PPC 19,5\%, Referral 19,9\%, SEO 20,6\%, Social 19,7\%.
+    \item Gananciosa: Email 15,8\%, PPC 27,7\%, Referral 18,3\%, SEO 23,8\%, Social 14,4\%.
+\end{itemize}
+O deslocamento para PPC/SEO confirma o que foi observado no gr\'afico de dispers\~ao e refor\c ca que o agente est\'a priorizando canais mais eficientes.
+
+\section{Interpreta\c c\~oes}
+\begin{enumerate}
+    \item O grande desequil\'ibrio de classes (7\,012 convers\~oes vs.\ 988 n\~ao convers\~oes) torna a recompensa altamente influenciada pela taxa de sucesso;
+    \item As visualiza\c c\~oes iniciais indicam pouca evid\^encia de correla\c c\~ao linear entre gasto e convers\~ao, justificando o uso de RL em vez de modelos puramente supervisionados.
+    \item O ganho de 2{,}2 p.p.\ na taxa de convers\~ao mostra que mesmo um agente tabular consegue gerar \emph{uplift};
+\end{enumerate}
+
+\end{document}
